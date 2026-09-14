@@ -31,6 +31,7 @@ function fixture() {
   ]);
   const prepare = vi.fn(async (_session, _body, batchId) => ({
     batchId,
+    created: true,
     status: "prepared",
     markdown: "> 原文\n\n回复",
   }));
@@ -116,6 +117,7 @@ describe("direct annotation send", () => {
     const f = fixture();
     f.prepare.mockResolvedValueOnce({
       batchId: "other-tab",
+      created: false,
       status: "prepared",
       markdown: "other",
     });

@@ -26,7 +26,7 @@ describe("standalone package contract", () => {
   it("depends on public conversation capabilities rather than a removed runtime", () => {
     const manifest = readPackageJson();
     expect(manifest.name).toBe("dsh-annotation");
-    expect(manifest.version).toBe("0.1.16");
+    expect(manifest.version).toBe("0.1.17");
     expect(manifest.type).toBe("module");
     expect(manifest.license).toBe("MIT");
 

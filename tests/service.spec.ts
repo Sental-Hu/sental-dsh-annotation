@@ -5,6 +5,8 @@ import type { KvTable } from "@deepseek-ai/dsh-storage-domain";
 import type { SessionSnapshot } from "../src/domain.js";
 import { parseBatchMarker } from "../src/shared/markdown.js";
 import { AnnotationRepository } from "../src/repository.js";
+import { createDirectAnnotationSender } from "../src/client/direct-send.js";
+import type { AnnotationApiClient } from "../src/client/api.js";
 import {
   AnnotationService,
   AnnotationServiceError,
@@ -137,6 +139,45 @@ async function create(
 }
 
 describe("AnnotationService", () => {
+  it.each([1, 2])(
+    "sends once through the real host batch contract with %i browser callers",
+    async (callers) => {
+      const { service, persistence } = makeService();
+      const annotation = await create(service);
+      const send = vi.fn(async (text: string) => {
+        persistence.durable.push(userEvent(text));
+      });
+      const api = {
+        list: (id: string) => service.list(id),
+        prepare: (
+          id: string,
+          body: string | undefined,
+          batchId: string | undefined,
+          _signal: AbortSignal | undefined,
+          annotationIds: string[],
+        ) => service.prepare({ sessionId: id, body, batchId, annotationIds }),
+        request: (request: Parameters<AnnotationService["settle"]>[0]) =>
+          service.settle(request as never),
+      } as unknown as AnnotationApiClient;
+      const operations = Array.from({ length: callers }, () =>
+        createDirectAnnotationSender(
+          { scope: () => ({ get: () => ({ send }) }) },
+          "session-1",
+          api,
+        )!(annotation),
+      );
+      const results = await Promise.allSettled(operations);
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(results.some((result) => result.status === "fulfilled")).toBe(
+        true,
+      );
+      const saved = (await service.list("session-1"))[0]!;
+      expect(saved.status).toBe("sent");
+      expect(saved.batchId).toMatch(/^host-/);
+      expect(parseBatchMarker(send.mock.calls[0]![0])?.batchId).toBe(saved.batchId);
+    },
+  );
+
   it("returns an empty snapshot for a session with no annotations", async () => {
     const { service } = makeService();
 

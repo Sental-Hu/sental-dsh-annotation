@@ -54,9 +54,9 @@ export function createDirectAnnotationSender(
     const batch = await api.prepare(sessionId, undefined, batchId, undefined, [
       annotation.id,
     ]);
-    // A concurrent tab may have prepared this annotation first. Only the
-    // owner of the newly minted batch can send; everyone else only reconciles.
-    if (batch.batchId !== batchId || batch.status === "sent") {
+    // The host mints its own batch id. Only a newly created response grants
+    // submission; a concurrent tab receiving an existing batch only reconciles.
+    if (batch.created !== true || batch.status === "sent") {
       await confirm(batch.batchId);
       return;
     }

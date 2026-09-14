@@ -1,6 +1,6 @@
 # dsh-annotation
 
-DSH Web 划选批注插件，当前版本 **0.1.16**，MIT 许可证。独立安装，不修改 DSH 核心源码。
+DSH Web 划选批注插件，当前版本 **0.1.17**，MIT 许可证。独立安装，不修改 DSH 核心源码。
 
 在 AI 已完成回答的普通文本上划选，添加、修改、定位或删除批注。批注可作为独立引用卡片加入输入框，随消息发送；支持同一回答内的相邻普通段落，排除代码、表格、工具输出和跨消息选区。删除中间批注后，其余编号保持不变。
 
@@ -51,7 +51,7 @@ cd dsh-annotation
 pnpm install --frozen-lockfile
 pnpm build
 pnpm pack
-dsh plugin --profile web add ./dsh-annotation-0.1.16.tgz
+dsh plugin --profile web add ./dsh-annotation-0.1.17.tgz
 ```
 
 上述命令将包安装到 web profile；若使用其他 profile，请替换 web。安装后重启对应 DSH 服务并刷新窗口，在一条 AI 已完成的普通文本回答中划选，检查“批注”菜单及“保存 / 发送”按钮。

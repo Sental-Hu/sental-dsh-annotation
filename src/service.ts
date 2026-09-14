@@ -176,6 +176,8 @@ export interface ReconcileAnnotationRequest {
 
 export interface PreparedAnnotationBatch extends AnnotationBatchRecord {
   readonly marker: string;
+  /** Only the request that created this batch may submit a direct reply. */
+  readonly created?: boolean;
 }
 
 type QueueTask<T> = () => Promise<T>;
@@ -912,7 +914,10 @@ export class AnnotationService {
         markdown,
         batchId: request.batchId,
       });
-      return cloneBatchWithMarker(batch);
+      return {
+        ...cloneBatchWithMarker(batch),
+        ...(request.batchId === undefined ? {} : { created: true }),
+      };
     });
     this.prepares.set(prepareKey, operation);
     void operation.then(
