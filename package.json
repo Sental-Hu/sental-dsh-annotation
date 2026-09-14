@@ -1,0 +1,85 @@
+{
+  "name": "dsh-annotation",
+  "version": "0.1.16",
+  "type": "module",
+  "description": "Standalone DSH Web annotation plugin for assistant-text review.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/client.js.map",
+    "lib/types/**/*.d.ts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "DESIGN.md"
+  ],
+  "scripts": {
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "build": "node -e \"require('node:fs').rmSync('lib',{recursive:true,force:true})\" && tsc -p tsconfig.json --emitDeclarationOnly && tsdown",
+    "pack:check": "pnpm build && node scripts/check-pack.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-input-trigger"
+      ],
+      "external": [
+        "react"
+      ]
+    }
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-storage-domain": ">=0.1.0-rc.8 <0.2.0 || >=0.1.5-rc.1 <0.1.5"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-storage-domain": "0.1.0-rc.8",
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^24.3.0",
+    "@vitest/coverage-v8": "^4.1.8",
+    "eslint": "^9.35.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.43.0",
+    "vitest": "^4.1.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hushengtao24-jpg/dsh-annotation.git"
+  },
+  "homepage": "https://github.com/hushengtao24-jpg/dsh-annotation#readme"
+}

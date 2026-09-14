@@ -1,0 +1,8 @@
+coverage
+lib
+.pack
+node_modules
+DESIGN.md
+docs
+pnpm-lock.yaml
+tests/fixtures

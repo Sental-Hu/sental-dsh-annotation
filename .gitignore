@@ -1,0 +1,13 @@
+node_modules/
+lib/
+coverage/
+dist/
+.worktrees/
+.pack/
+.npm-cache/
+*.tgz
+*.tsbuildinfo
+.env
+.env.*
+*.log
+.DS_Store
