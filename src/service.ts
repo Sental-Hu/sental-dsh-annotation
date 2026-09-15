@@ -9,10 +9,7 @@ import type {
   PrepareInput,
 } from "./repository.js";
 import { RepositoryError } from "./repository.js";
-import {
-  classifyRangeConflict,
-  validateRangeBoundary,
-} from "./shared/ranges.js";
+import { validateRangeBoundary } from "./shared/ranges.js";
 import {
   formatBatchMarker,
   parseBatchMarker,
@@ -186,13 +183,6 @@ function asPort(
   repository: AnnotationRepositoryPort | AnnotationRepository,
 ): AnnotationRepositoryPort {
   return repository;
-}
-
-function anchorSameBlock(left: TextAnchor, right: TextAnchor): boolean {
-  return (
-    left.blockPath.length === right.blockPath.length &&
-    left.blockPath.every((part, index) => part === right.blockPath[index])
-  );
 }
 
 function assertNonBlank(value: string, field: string): void {
@@ -547,32 +537,6 @@ export class AnnotationService {
     }
   }
 
-  private async assertNoConflict(
-    sessionId: string,
-    messageId: string,
-    anchor: TextAnchor,
-    exceptId?: string,
-  ): Promise<void> {
-    assertAnchor(anchor);
-    const existing = await this.repository.list(sessionId);
-    for (const annotation of existing) {
-      if (annotation.id === exceptId || annotation.messageId !== messageId)
-        continue;
-      if (!anchorSameBlock(annotation.anchor, anchor)) continue;
-      const reason = classifyRangeConflict(anchor, annotation.anchor);
-      if (reason !== "none") {
-        throw new AnnotationServiceError(
-          "range-conflict",
-          `Annotation range ${reason} with ${annotation.id}.`,
-          {
-            reason,
-            annotationId: annotation.id,
-          },
-        );
-      }
-    }
-  }
-
   async create(
     sessionId: string,
     input: AnnotationCreateInput,
@@ -589,11 +553,7 @@ export class AnnotationService {
     return this.enqueue(request.sessionId, async () => {
       assertNonBlank(request.comment, "comment");
       await this.assertTarget(request.sessionId, request.messageId);
-      await this.assertNoConflict(
-        request.sessionId,
-        request.messageId,
-        request.anchor,
-      );
+      assertAnchor(request.anchor);
       return this.repository.create(request.sessionId, request);
     });
   }
@@ -675,25 +635,7 @@ export class AnnotationService {
       }
       if (request.messageId !== undefined)
         await this.assertTarget(request.sessionId, request.messageId);
-      if (request.anchor !== undefined) {
-        const current = await this.repository
-          .list(request.sessionId)
-          .then((items) =>
-            items.find((item) => item.id === request.annotationId),
-          );
-        if (!current)
-          throw new RepositoryError(
-            "not-found",
-            `Unknown annotation: ${request.annotationId}.`,
-            { annotationId: request.annotationId },
-          );
-        await this.assertNoConflict(
-          request.sessionId,
-          request.messageId ?? current.messageId,
-          request.anchor,
-          request.annotationId,
-        );
-      }
+      if (request.anchor !== undefined) assertAnchor(request.anchor);
       return this.repository.update(
         request.sessionId,
         request.annotationId,

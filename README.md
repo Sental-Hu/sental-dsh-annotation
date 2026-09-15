@@ -7,7 +7,7 @@
 选中一句话，写下追问、纠正或补充，一键发送。<br>
 也可以先批注多处，再集中回复。
 
-**DSH Web** · **v0.1.17** · [**MIT License**](LICENSE)
+**DSH Web** · **v0.1.19** · [**MIT License**](LICENSE)
 
 [快速开始](#快速开始) · [使用方式](#两种回复方式) · [常见问题](#常见问题) · [参与开发](#参与开发)
 
@@ -28,14 +28,12 @@
 | 就这一句话继续讨论     | **发送** | 保存当前批注，将原文和批注一起发送；保留输入框已有草稿和其他引用。      |
 | 看完全文后一起回应多处 | **保存** | 保存批注，将新批注引用加入输入框；整理好后，用 DSH 的发送按钮统一提交。 |
 
-发送成功的批注会保留在输入框上方的 **历史批注** 中，之后还可以点击加入输入框，再次引用。
-
-![批注随原文发送后，AI 继续回答；已发送批注保留在输入框上方的历史批注列表中](docs/images/sent.png)
+所有已保存批注统一保留在输入框上方的 **批注标签页** 中，发送后仍可编辑、删除或加入输入框再次引用。同一段原文可以添加多条独立批注，选区也可以相互重叠。
 
 还支持：
 
 - **回到原文**：已保存批注保留原文高亮，可定位查看。
-- **继续整理**：编辑、删除或调整待发送批注的顺序；删除其他条目不会改变现有编号。
+- **继续整理**：编辑、删除或调整已保存批注的顺序；删除其他条目不会改变现有编号。
 - **随手收起**：点击批注区域外部或按 Esc，收起当前详情；未保存的编辑内容会暂留在当前页面。
 
 ## 快速开始
@@ -64,14 +62,14 @@ pnpm build
 pnpm pack
 ```
 
-构建后，当前目录会生成 `dsh-annotation-0.1.17.tgz`。
+构建后，当前目录会生成 `dsh-annotation-0.1.19.tgz`。
 
 ### 3. 安装到 DSH
 
 在同一目录执行：
 
 ```sh
-dsh plugin --profile web add ./dsh-annotation-0.1.17.tgz
+dsh plugin --profile web add ./dsh-annotation-0.1.19.tgz
 ```
 
 `web` 是安装目标配置；如果你的 DSH 使用其他 profile，请替换为对应名称。安装后重启该 DSH 服务，并刷新浏览器页面。
@@ -84,7 +82,7 @@ dsh plugin --profile web add ./dsh-annotation-0.1.17.tgz
 先确认当前终端能够运行 DSH。如果你是从 DSH 源码启动的，可以将上面的 `dsh` 替换成自己平时使用的 CLI 启动命令，例如：
 
 ```sh
-node /path/to/deepseek-harness/apps/cli/lib/bin.js plugin --profile web add /path/to/dsh-annotation-0.1.17.tgz
+node /path/to/deepseek-harness/apps/cli/lib/bin.js plugin --profile web add /path/to/dsh-annotation-0.1.19.tgz
 ```
 
 请使用实际路径；路径含空格时加双引号。

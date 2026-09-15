@@ -19,7 +19,6 @@ import { highlightName, highlightStyleText } from "./highlight-style.js";
 import { appendToDraft, formatQuotedText } from "./composer-text.js";
 import { orphanedAnnotationLabels } from "../compat/input.js";
 import type { AnnotationReferenceTarget } from "./pending-reference.js";
-import { projectAnnotationPanel } from "./history-panel.js";
 import type { DirectAnnotationSender } from "./direct-send.js";
 import {
   hasAnnotationReferenceOccurrence,
@@ -139,14 +138,6 @@ function styleOnce(): void {
     .dsh-annotation-tab:hover .dsh-annotation-tab-close,.dsh-annotation-tab[data-active=true] .dsh-annotation-tab-close{opacity:.72}
     .dsh-annotation-tab-close:hover{opacity:1!important;background:color-mix(in srgb,currentColor 12%,transparent)}
     .dsh-annotation-tab-dot{width:7px;height:7px;flex:0 0 auto;border-radius:50%}
-    .dsh-annotation-history-wrap{display:flex;flex-direction:column;gap:3px;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent);padding-top:6px}
-    .dsh-annotation-history-toggle{align-self:flex-start;border:1px solid transparent;border-radius:7px;padding:5px 8px;background:transparent;color:var(--dsw-alias-label-tertiary,#64748b);font:12px/1.2 system-ui,sans-serif;cursor:pointer}
-    .dsh-annotation-history-toggle:hover{border-color:color-mix(in srgb,currentColor 12%,transparent);background:color-mix(in srgb,currentColor 6%,transparent);color:var(--dsw-alias-label-primary,#0f172a)}
-    .dsh-annotation-history{display:flex;max-height:280px;flex-direction:column;gap:2px;margin-top:1px;overflow-y:auto;border:1px solid color-mix(in srgb,currentColor 14%,transparent);border-radius:8px;padding:4px;background:color-mix(in srgb,var(--dsw-alias-bg-base,#fff) 96%,currentColor);scrollbar-width:thin}
-    .dsh-annotation-history-row{display:flex;align-items:center;gap:7px;width:100%;border:0;border-radius:6px;padding:6px 7px;background:transparent;color:inherit;font:12px/1.3 system-ui,sans-serif;text-align:left;cursor:pointer}
-    .dsh-annotation-history-row:hover:not(:disabled){background:color-mix(in srgb,currentColor 7%,transparent)}
-    .dsh-annotation-history-row:disabled{cursor:default;opacity:.58}
-    .dsh-annotation-history-row span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary,#64748b)}
     .dsh-annotation-card-detail{border:1px solid color-mix(in srgb,currentColor 18%,transparent);border-top:0;border-left:3px solid var(--dsh-annotation-color,#f59e0b);border-radius:0 0 8px 8px;padding:8px 9px;background:var(--dsw-alias-bg-base,#fff)}
     .dsh-annotation-card-detail[data-active=true]{outline:2px solid color-mix(in srgb,currentColor 35%,transparent)}
     .dsh-annotation-card-head{display:flex;align-items:center;gap:6px;color:var(--dsw-alias-label-tertiary,#64748b);font-size:11px}
@@ -399,6 +390,10 @@ export function AnnotationDock({
     const activateHighlight = (event: MouseEvent) => {
       const target = event.target;
       if (isAnnotationUiTarget(target)) return;
+      // A drag ending inside a highlight is a new selection, not an edit click.
+      // Let the selection menu offer another annotation on the same text.
+      const selectedText = document.getSelection();
+      if (selectedText && !selectedText.isCollapsed) return;
       // A visible unsaved editor is the user's current work; never replace it
       // merely because a highlighted range was clicked behind the popover.
       if (composerRef.current) return;
@@ -619,8 +614,7 @@ export function AnnotationDock({
           });
         }
         setSaveState({ status: "saved" });
-        if (sendAfter) setHistoryOpen(true);
-        else if (current.kind === "new")
+        if (!sendAfter && current.kind === "new")
           insertAnnotationReference?.({
             id: persisted.id,
             sequence: persisted.order + 1,
@@ -664,26 +658,32 @@ export function AnnotationDock({
       "button",
       {
         type: "button",
-        disabled: busy || !composer?.comment.trim() || !sendAnnotation,
-        title: sendAnnotation
-          ? "保存批注并直接发送到当前会话，不修改输入框"
-          : "当前 DSH 未提供直接发送接口",
+        disabled:
+          busy ||
+          !composer?.comment.trim() ||
+          !sendAnnotation ||
+          annotation?.status === "sent",
+        title:
+          annotation?.status === "sent"
+            ? "保存修改后可通过加入输入再次引用"
+            : sendAnnotation
+              ? "保存批注并直接发送到当前会话，不修改输入框"
+              : "当前 DSH 未提供直接发送接口",
         onClick: () => void saveNow(true, true),
       },
-      annotation &&
-        (annotation.status === "prepared" || annotation.status === "unknown")
-        ? "核对发送"
-        : "发送",
+      annotation?.status === "sent"
+        ? "已发送"
+        : annotation &&
+            (annotation.status === "prepared" ||
+              annotation.status === "unknown")
+          ? "核对发送"
+          : "发送",
     );
 
   const displayed = React.useMemo(
     () => toDisplayAnnotations([...snapshot.annotations]),
     [snapshot.annotations],
   );
-  const { current: currentAnnotations, history: historyAnnotations } =
-    React.useMemo(() => projectAnnotationPanel(displayed), [displayed]);
-  const [historyOpen, setHistoryOpen] = React.useState(false);
-  React.useEffect(() => setHistoryOpen(false), [session.sessionId]);
   const viewport = {
     width: typeof window === "undefined" ? 1024 : window.innerWidth,
     height: typeof window === "undefined" ? 768 : window.innerHeight,
@@ -856,7 +856,7 @@ export function AnnotationDock({
       })
       .catch((error: unknown) => setDeleteError(deleteErrorMessage(error)));
   };
-  const cards = currentAnnotations.map((annotation: DisplayAnnotation) => {
+  const cards = displayed.map((annotation: DisplayAnnotation) => {
     const tab = annotationTab(
       annotation.sequence,
       expandedId === annotation.id,
@@ -902,17 +902,15 @@ export function AnnotationDock({
       ),
     );
   });
-  const expanded = currentAnnotations.find((item) => item.id === expandedId);
+  const expanded = displayed.find((item) => item.id === expandedId);
   const detail = expanded
     ? (() => {
         const active = composer?.kind === "edit" && composer.id === expanded.id;
-        const position = currentAnnotations.findIndex(
-          (item) => item.id === expanded.id,
-        );
+        const position = displayed.findIndex((item) => item.id === expanded.id);
         const move = (delta: -1 | 1) => {
           const next = position + delta;
-          if (next < 0 || next >= currentAnnotations.length) return;
-          const ids = currentAnnotations.map((item) => item.id);
+          if (next < 0 || next >= displayed.length) return;
+          const ids = displayed.map((item) => item.id);
           [ids[position], ids[next]] = [ids[next]!, ids[position]!];
           void store
             .reorder(ids, snapshot.revision ?? "0")
@@ -962,7 +960,7 @@ export function AnnotationDock({
             "button",
             {
               type: "button",
-              disabled: position === currentAnnotations.length - 1,
+              disabled: position === displayed.length - 1,
               onClick: () => move(1),
               "aria-label": "下移",
             },
@@ -1111,49 +1109,6 @@ export function AnnotationDock({
 
   const loadFailure = loadErrorMessage(snapshot.status, snapshot.error);
   const retryLoad = () => void store.load().catch(() => undefined);
-  const history = historyAnnotations.length
-    ? h(
-        "div",
-        { className: "dsh-annotation-history-wrap" },
-        h(
-          "button",
-          {
-            type: "button",
-            className: "dsh-annotation-history-toggle",
-            "aria-expanded": historyOpen,
-            onClick: () => setHistoryOpen(!historyOpen),
-          },
-          `历史批注（${historyAnnotations.length}）`,
-        ),
-        historyOpen
-          ? h(
-              "div",
-              { className: "dsh-annotation-history" },
-              ...historyAnnotations.map((annotation) =>
-                h(
-                  "button",
-                  {
-                    key: annotation.id,
-                    type: "button",
-                    className: "dsh-annotation-history-row",
-                    title: "将这条批注加入输入框",
-                    disabled: isInInput(annotation),
-                    onClick: () => addToInput(annotation),
-                  },
-                  h(
-                    "b",
-                    null,
-                    isInInput(annotation)
-                      ? `${annotationListLabel(annotation.sequence)}（已加入）`
-                      : annotationListLabel(annotation.sequence),
-                  ),
-                  h("span", null, annotation.comment || annotation.quote),
-                ),
-              ),
-            )
-          : null,
-      )
-    : null;
   return h(
     "div",
     { className: "dsh-annotation-dock" },
@@ -1208,7 +1163,6 @@ export function AnnotationDock({
           h("span", null, "草稿已保留"),
         )
       : null,
-    history,
   );
 }
 

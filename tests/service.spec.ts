@@ -174,9 +174,45 @@ describe("AnnotationService", () => {
       const saved = (await service.list("session-1"))[0]!;
       expect(saved.status).toBe("sent");
       expect(saved.batchId).toMatch(/^host-/);
-      expect(parseBatchMarker(send.mock.calls[0]![0])?.batchId).toBe(saved.batchId);
+      expect(parseBatchMarker(send.mock.calls[0]![0])?.batchId).toBe(
+        saved.batchId,
+      );
     },
   );
+
+  it("preserves submitted messages and batch snapshots when a sent annotation is edited and deleted", async () => {
+    const { service, persistence } = makeService();
+    const original = await create(service);
+    const batch = await service.prepare({
+      sessionId: "session-1",
+      annotationIds: [original.id],
+    });
+    persistence.durable.push(userEvent(batch.markdown));
+    await service.settle({
+      sessionId: "session-1",
+      batchId: batch.batchId,
+      outcome: "accepted",
+    });
+    const before = await service.snapshot("session-1");
+    const sent = before.annotations[0]!;
+    expect(sent.status).toBe("sent");
+    const messages = structuredClone(persistence.durable);
+    const edited = await service.update("session-1", sent.id, {
+      comment: "edited after sending",
+      anchor: anchor(2),
+      expectedVersion: sent.version,
+    });
+    expect(edited.comment).toBe("edited after sending");
+    expect(edited.status).toBe("sent");
+    expect((await service.snapshot("session-1")).batches).toEqual(
+      before.batches,
+    );
+    await service.delete("session-1", edited.id, edited.version);
+    expect((await service.snapshot("session-1")).batches).toEqual(
+      before.batches,
+    );
+    expect(persistence.durable).toEqual(messages);
+  });
 
   it("returns an empty snapshot for a session with no annotations", async () => {
     const { service } = makeService();
@@ -312,40 +348,56 @@ describe("AnnotationService", () => {
     }
   });
 
-  it("enforces same-message duplicate/contains/overlap rules while allowing adjacent ranges", async () => {
+  it("keeps duplicate, contained, overlapping and adjacent annotations independent", async () => {
     const { service } = makeService();
-    await create(service, 0);
-    await expect(create(service, 0)).rejects.toMatchObject({
-      code: "range-conflict",
+    const ranges = [
+      [2, 6],
+      [2, 6],
+      [1, 7],
+      [3, 5],
+      [0, 3],
+      [5, 8],
+      [6, 8],
+    ];
+    const records = [];
+    for (const [start, end] of ranges) {
+      records.push(
+        await service.create("session-1", {
+          messageId: "message-1",
+          anchor: { ...anchor(start!), end: end! },
+          quote: "shared text",
+          comment: "comment-" + records.length,
+          order: records.length,
+        }),
+      );
+    }
+    expect(new Set(records.map((item) => item.id)).size).toBe(ranges.length);
+    const first = records[0]!;
+    const second = records[1]!;
+    const updated = await service.update("session-1", first.id, {
+      comment: "independent edit",
+      expectedVersion: first.version,
     });
-    await expect(
-      service.create("session-1", {
-        messageId: "message-1",
-        anchor: { ...anchor(0), end: 3 },
-        quote: "q",
-        comment: "c",
-        order: 1,
-      }),
-    ).rejects.toMatchObject({ code: "range-conflict" });
-    await create(service, 2);
-    expect((await service.list("session-1")).length).toBe(2);
+    await service.delete("session-1", updated.id, updated.version);
+    const remaining = await service.list("session-1");
+    expect(remaining).toHaveLength(ranges.length - 1);
+    expect(remaining.find((item) => item.id === second.id)).toEqual(second);
   });
 
   it("delegates CAS-protected update, reorder and delete after Host validation", async () => {
     const { service, repository, persistence } = makeService();
     const first = await create(service, 0);
     const second = await create(service, 2);
-    const updated = await service.update("session-1", first.id, {
+    let updated = await service.update("session-1", first.id, {
       comment: "updated",
       color: first.color,
       expectedVersion: first.version,
     });
-    await expect(
-      service.update("session-1", updated.id, {
-        anchor: anchor(2),
-        expectedVersion: updated.version,
-      }),
-    ).rejects.toMatchObject({ code: "range-conflict" });
+    updated = await service.update("session-1", updated.id, {
+      anchor: anchor(2),
+      expectedVersion: updated.version,
+    });
+    expect(updated.anchor).toEqual(second.anchor);
     await expect(
       service.update("session-1", updated.id, {
         anchor: { ...anchor(9), start: -1 },

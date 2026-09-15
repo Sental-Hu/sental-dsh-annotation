@@ -46,7 +46,7 @@ export function positionPopover(
 }
 
 const ANNOTATION_UI_SELECTOR =
-  ".dsh-annotation-resume,.dsh-annotation-history-wrap,.dsh-annotation-menu,.dsh-annotation-editor-popover,.dsh-annotation-tab,.dsh-annotation-card-detail,.dsh-annotation-handle";
+  ".dsh-annotation-resume,.dsh-annotation-menu,.dsh-annotation-editor-popover,.dsh-annotation-tab,.dsh-annotation-card-detail,.dsh-annotation-handle";
 
 /** Return true when an event target belongs to this plugin's own UI. */
 export function isAnnotationUiTarget(target: unknown): boolean {

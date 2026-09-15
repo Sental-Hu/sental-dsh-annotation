@@ -113,6 +113,11 @@ const props = {
     getSnapshot: () => snapshot,
     setSession() {},
     load: async () => {},
+    delete: async (id) => {
+      snapshot.annotations = snapshot.annotations.filter(
+        (item) => item.id !== id,
+      );
+    },
     update: async (id, patch) => {
       assert.equal(id, "a");
       const updated = {
@@ -190,16 +195,37 @@ assert.equal(
   find((n) => n.type === "textarea"),
   undefined,
 );
-assert.ok(find((n) => n.type === "button" && hasText(n, "历史批注（1）")));
-assert.ok(
-  find(
-    (n) =>
-      n.props.className === "dsh-annotation-history-row" &&
-      hasText(n, "修改中的草稿"),
-  ),
+assert.equal(
+  find((n) => n.props.className === "dsh-annotation-history-wrap"),
+  undefined,
+);
+clickText("批注 3");
+assert.ok(detail());
+clickText("编辑");
+assert.equal(
+  find((n) => n.type === "button" && hasText(n, "已发送")).props.disabled,
+  true,
+);
+find((n) => n.type === "textarea").props.onChange({
+  target: { value: "发送后的修改" },
+});
+render();
+clickText("保存");
+await new Promise((resolve) => setTimeout(resolve, 0));
+render();
+assert.equal(snapshot.annotations[0].comment, "发送后的修改");
+assert.equal(snapshot.annotations[0].status, "sent");
+if (!detail()) clickText("批注 3");
+clickText("删除");
+await new Promise((resolve) => setTimeout(resolve, 0));
+render();
+assert.equal(snapshot.annotations.length, 0);
+assert.equal(
+  find((n) => n.props.role === "tab"),
+  undefined,
 );
 console.log(
-  "PASS: shipped dock save-and-send preserves the composer and archives the saved annotation above it.",
+  "PASS: sent annotations remain editable and deletable in unified tabs; direct resend is disabled.",
 );
 // Reopen an unsent item and make the send transport fail. The editor must
 // retain the already-saved record, rather than creating a duplicate on retry.
