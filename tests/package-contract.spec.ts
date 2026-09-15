@@ -25,7 +25,7 @@ function readPackageFiles(): string[] {
 describe("standalone package contract", () => {
   it("depends on public conversation capabilities rather than a removed runtime", () => {
     const manifest = readPackageJson();
-    expect(manifest.name).toBe("dsh-annotation");
+    expect(manifest.name).toBe("sental-dsh-annotation");
     expect(manifest.version).toMatch(/^0\.1\.\d+$/);
     expect(manifest.type).toBe("module");
     expect(manifest.license).toBe("MIT");
@@ -94,8 +94,8 @@ describe("standalone package contract", () => {
   it("patches the bundle graph by inserting only this package row", () => {
     const patch = readFileSync(patchPath, "utf8");
     expect(patch).toContain("- insert:");
-    expect(patch).toContain("- id: dsh-annotation");
-    expect(patch).toMatch(/name:\s+["']dsh-annotation["']/);
+    expect(patch).toContain("- id: sental-dsh-annotation");
+    expect(patch).toMatch(/name:\s+["']sental-dsh-annotation["']/);
     expect(patch).not.toMatch(/^- id:\s+/m);
     expect(patch.match(/^\s{4}-\s+id:\s+/gm) ?? []).toHaveLength(1);
     expect(patch.match(/^\s+name:\s+/gm) ?? []).toHaveLength(1);

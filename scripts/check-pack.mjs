@@ -61,7 +61,7 @@ for (const target of [
 
 const clientBundle = readFileSync(clientBundlePath, "utf8");
 assert(
-  /window\.__ModuleLoader__\.load\(\{\s*id:\s*"dsh-annotation",\s*factory:\s*\(require\)\s*=>\s*\{/m.test(
+  /window\.__ModuleLoader__\.load\(\{\s*id:\s*"sental-dsh-annotation",\s*factory:\s*\(require\)\s*=>\s*\{/m.test(
     clientBundle,
   ),
   "client bundle is missing the lazy-CJS loader registration",
@@ -137,7 +137,7 @@ try {
     `${packageRoot}/package.json`,
   ]);
   assert(
-    packedManifest.includes('"name": "dsh-annotation"'),
+    packedManifest.includes('"name": "sental-dsh-annotation"'),
     "packed package.json has the wrong package name",
   );
   assert(

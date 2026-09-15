@@ -1,6 +1,6 @@
 import { defineConfig } from "tsdown";
 
-const packageId = "dsh-annotation";
+const packageId = "sental-dsh-annotation";
 
 export default defineConfig([
   {

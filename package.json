@@ -1,6 +1,6 @@
 {
-  "name": "dsh-annotation",
-  "version": "0.1.19",
+  "name": "sental-dsh-annotation",
+  "version": "0.1.20",
   "type": "module",
   "description": "Standalone DSH Web annotation plugin for assistant-text review.",
   "license": "MIT",
@@ -79,7 +79,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hushengtao24-jpg/dsh-annotation.git"
+    "url": "https://github.com/Sental-Hu/sental-dsh-annotation.git"
   },
-  "homepage": "https://github.com/hushengtao24-jpg/dsh-annotation#readme"
+  "homepage": "https://github.com/Sental-Hu/sental-dsh-annotation#readme"
 }

@@ -1,13 +1,13 @@
 <div align="center">
 
-# dsh-annotation
+# Sental DSH Annotation
 
 ### 划选 AI 回答，直接说出你的想法。
 
 选中一句话，写下追问、纠正或补充，一键发送。<br>
 也可以先批注多处，再集中回复。
 
-**DSH Web** · **v0.1.19** · [**MIT License**](LICENSE)
+**DSH Web** · **v0.1.20** · [**MIT License**](LICENSE)
 
 [快速开始](#快速开始) · [使用方式](#两种回复方式) · [常见问题](#常见问题) · [参与开发](#参与开发)
 
@@ -17,7 +17,7 @@
 
 <p align="center"><sub>选中一句建议，直接追问：“为什么不选数据库？请比较两种方案的维护成本。”</sub></p>
 
-`dsh-annotation` 是 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) Web 界面的独立批注插件。它让你在阅读 AI 回答时，直接围绕某句话继续讨论，省去复制原文、切换输入框、重新解释引用位置的步骤。
+`sental-dsh-annotation` 是 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) Web 界面的独立批注插件。它让你在阅读 AI 回答时，直接围绕某句话继续讨论，省去复制原文、切换输入框、重新解释引用位置的步骤。
 
 ## 两种回复方式
 
@@ -50,26 +50,26 @@
 npm install -g pnpm@11.19.0
 ```
 
-本仓库目前通过源码构建安装，尚未发布到 npm。私有仓库需要使用有访问权限的 GitHub 账号克隆。
+本项目通过源码构建安装。
 
 ### 2. 下载并构建
 
 ```sh
-git clone https://github.com/hushengtao24-jpg/dsh-annotation.git
-cd dsh-annotation
+git clone https://github.com/Sental-Hu/sental-dsh-annotation.git
+cd sental-dsh-annotation
 pnpm install --frozen-lockfile
 pnpm build
 pnpm pack
 ```
 
-构建后，当前目录会生成 `dsh-annotation-0.1.19.tgz`。
+构建后，当前目录会生成 `sental-dsh-annotation-0.1.20.tgz`。
 
 ### 3. 安装到 DSH
 
 在同一目录执行：
 
 ```sh
-dsh plugin --profile web add ./dsh-annotation-0.1.19.tgz
+dsh plugin --profile web add ./sental-dsh-annotation-0.1.20.tgz
 ```
 
 `web` 是安装目标配置；如果你的 DSH 使用其他 profile，请替换为对应名称。安装后重启该 DSH 服务，并刷新浏览器页面。
@@ -82,12 +82,23 @@ dsh plugin --profile web add ./dsh-annotation-0.1.19.tgz
 先确认当前终端能够运行 DSH。如果你是从 DSH 源码启动的，可以将上面的 `dsh` 替换成自己平时使用的 CLI 启动命令，例如：
 
 ```sh
-node /path/to/deepseek-harness/apps/cli/lib/bin.js plugin --profile web add /path/to/dsh-annotation-0.1.19.tgz
+node /path/to/deepseek-harness/apps/cli/lib/bin.js plugin --profile web add /path/to/sental-dsh-annotation-0.1.20.tgz
 ```
 
 请使用实际路径；路径含空格时加双引号。
 
 </details>
+
+### 从旧版 dsh-annotation 升级
+
+先备份 DSH 数据目录，再移除旧包并安装新包，避免两个版本同时加载：
+
+```sh
+dsh plugin --profile web remove dsh-annotation
+dsh plugin --profile web add ./sental-dsh-annotation-0.1.20.tgz
+```
+
+新版本保留批注存储及引用格式，已有批注可继续使用。使用启动器管理插件时，安装后重新检查并保存插件选择，再启动 DSH。
 
 ## 支持范围
 
@@ -133,7 +144,7 @@ node /path/to/deepseek-harness/apps/cli/lib/bin.js plugin --profile web add /pat
 <summary><strong>怎样卸载？会删除批注吗？</strong></summary>
 
 ```sh
-dsh plugin --profile web remove dsh-annotation
+dsh plugin --profile web remove sental-dsh-annotation
 ```
 
 重启 DSH 并刷新页面后生效。卸载插件会保留已有批注数据。
@@ -149,7 +160,7 @@ dsh plugin --profile web remove dsh-annotation
 
 ## 参与开发
 
-欢迎通过 [Issues](https://github.com/hushengtao24-jpg/dsh-annotation/issues) 反馈问题或提出建议。报告问题时，请附上插件版本、DSH 版本、操作系统、浏览器及复现步骤。
+欢迎通过 [Issues](https://github.com/Sental-Hu/sental-dsh-annotation/issues) 反馈问题或提出建议。报告问题时，请附上插件版本、DSH 版本、操作系统、浏览器及复现步骤。
 
 ```sh
 pnpm lint
@@ -165,4 +176,4 @@ pnpm pack:check
 
 ## 许可证
 
-[MIT](LICENSE) · dsh-annotation contributors
+[MIT](LICENSE) · sental-dsh-annotation contributors
